@@ -2,12 +2,14 @@ import json
 import pandas as pd
 import json
 
-with open('/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/liste_json', 'r') as data_file:
+path = '/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/'
+
+with open(path + 'liste_json', 'r') as data_file:
     json_data = data_file.read()
 
 data = json.loads(json_data)
 
-with open('/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/votant.textile', 'r') as data_file:
+with open(path + 'votant.textile', 'r') as data_file:
     json_data = data_file.read()
 
 votant = json.loads(json_data)
@@ -31,20 +33,18 @@ longueur_acteur = len(acteur)
 for x in range(longueur_acteur):
     liste_id.append(acteur[x]['uid']['#text'])
 
-df = pd.DataFrame(0,index = liste_id, columns = liste_id)
-
+df = pd.DataFrame(0, index=liste_id, columns=liste_id)
 
 essai_bis = 2
-         
 
 
 def liste_pour_contre_vote(vote):
     liste_pour = []
     liste_contre = []
     groupe = vote['ventilationVotes']['organe']['groupes']['groupe']
-    for x in range(0,7):
+    for x in range(0, 7):
         pour = groupe[x]['vote']['decompteNominatif']['pours']
-        if not pour == None:
+        if pour is not None:
             if type(pour['votant']) == list:
                 for _votant in pour['votant']:
                     liste_pour.append(_votant['acteurRef'])
@@ -53,7 +53,7 @@ def liste_pour_contre_vote(vote):
                 liste_pour.append(pour['votant']['acteurRef'])
 
         contre = groupe[x]['vote']['decompteNominatif']['contres']
-        if not contre == None:
+        if contre is not None:
             if type(contre['votant']) == list:
                 for _votant in contre['votant']:
                     liste_contre.append(_votant['acteurRef'])
@@ -61,8 +61,7 @@ def liste_pour_contre_vote(vote):
             elif type(contre['votant']) == dict:
                 liste_contre.append(contre['votant']['acteurRef'])
 
-    return [liste_pour,liste_contre]
-
+    return [liste_pour, liste_contre]
 
 
 k = 0
@@ -76,20 +75,17 @@ for vote in data_voulue:
             df[x][y] += 1
     for x in liste_contres:
         for y in liste_contres:
-            df[x][y] += 1
-    k+=1
+            df[x][y] + = 1
+    k + = 1
     print(k)
-
-
 
 for x in liste_id:
     if max(df[x]) < 19:
-        df = df.drop(x,axis=1)
-        df = df.drop(x,axis=0)
+        df = df.drop(x, axis=1)
+        df = df.drop(x, axis=0)
 
-df.to_csv('/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/tp_dviz.csv')
-df.to_json('/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/tp_dviz.json')
-
+df.to_csv(path + 'tp_dviz.csv')
+df.to_json(path + 'tp_dviz.json')
 
 result = dict()
 
@@ -100,15 +96,14 @@ result['nodes'] = []
 groupe = data_voulue[0]['ventilationVotes']['organe']['groupes']['groupe']
 liste_groupe = []
 for col in colnames:
-    allez = sorted(df[col], reverse = True)
+    allez = sorted(df[col], reverse=True)
     if allez[1] > 20:
         event = dict()
         event['id'] = col
-        ok= False
-        for x in range(0,7):
-            ##print(groupe[x]['vote']['decompteNominatif'])
+        ok = False
+        for x in range(0, 7):
             for typevote in ['pours', 'contres', 'abstentions', 'nonVotants']:
-                if groupe[x]['vote']['decompteNominatif'][typevote] == None:
+                if groupe[x]['vote']['decompteNominatif'][typevote] is None:
                     pass
                 elif type(groupe[x]['vote']['decompteNominatif'][typevote]) == dict:
                     if type(groupe[x]['vote']['decompteNominatif'][typevote]['votant']) == dict:
@@ -120,15 +115,12 @@ for col in colnames:
                             if votant['acteurRef'] == col:
                                 liste_groupe.append(x)
                                 ok = True
-        if ok == True:
+        if ok is True:
             event['group'] = liste_groupe[-1]
         else:
             event['group'] = 99
-
-
-
         result['nodes'].append(event)
-    
+
 result['links'] = []
 for col in colnames:
     for coli in colnames:
@@ -140,24 +132,6 @@ for col in colnames:
             result['links'].append(event)
 
 j = json.dumps(result)
-f = open("/Users/ppx/Desktop/M2\ DS/data_viz/TP/TP_note/allez.json","w")
+f = open(path + "allez.json", "w")
 f.write(j)
 f.close()
-
- 
-"""
-count = 0
-
-longueur_liste_id = len(liste_id)
-for i in range(0,longueur_liste_id):
-    for j in range(i+1, longueur_liste_id):
-        vote0 = meme_vote(data_voulue[0],liste_id[i],liste_id[j])
-        if vote0[0]:
-            df[liste_id[i]][liste_id[j]] += 1
-            count += 1
-        for k in range(1,len(data_file)):
-            vote0 = meme_vote(data_voulue[k],liste_id[i],liste_id[j],g1 = vote0[1],g2 = vote0[2])
-            if vote0[0]:
-                df[liste_id[i]][liste_id[j]] += 1
-                count += 1
-"""
